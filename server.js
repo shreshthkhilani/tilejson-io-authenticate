@@ -1,17 +1,21 @@
 // server.js
 
-const axios = require('axios');
 const express = require('express');
 const app = express();
+const bodyParser = require('body-parser');
+app.use(bodyParser.json());
 
 const githubUrl = 'https://github.com/login/oauth/access_token';
 const githubHeaders = {
   Accept: 'application/json'
 };
+const axios = require('axios');
 const githubAxios = axios.create({
   baseURL: githubUrl,
   headers: githubHeaders
 });
+
+const { verifyPostData, refreshApp } = require('./github-webhook.js');
 
 app.get('/authenticate/:code', (request, response) => {
   const code = request.params.code;
@@ -36,6 +40,8 @@ app.get('/authenticate/:code', (request, response) => {
       response.status(githubError.response.status).send(githubError.response.data);
   });
 });
+
+app.post('/deploy', verifyPostData, refreshApp);
 
 const listener = app.listen(process.env.PORT, function() {
   console.log('Your app is listening on port ' + listener.address().port);
